@@ -1,0 +1,47 @@
+1. docker build -t custom-kerberos-kdc . 
+
+2. docker run -d --name kerberos-kdc -p 88:88 -p 464:464 custom-kerberos-kdc
+
+3. docker exec -it kerberos-kdc /bin/bash 
+
+4. kadmin.local -q "addprinc admin/admin@EXAMPLE.COM" (zvolit heslo)
+
+5. kadmin.local -q "addprinc user@EXAMPLE.COM" (zvolit heslo)
+
+6. kadmin.local -q "addprinc -randkey HTTP/localhost@EXAMPLE.COM"
+
+7.  kadmin.local -q "ktadd -k /etc/krb5kdc/flask.keytab HTTP/localhost@EXAMPLE.COM"
+
+8. docker cp kerberos-kdc:/etc/krb5kdc/flask.keytab ./flask.keytab
+
+9. spustit server
+
+10.1 nevim jestli je potreba menit /etc/krb5.conf na notebooku, ale jsem to pro jistotu menil
+
+[libdefaults]
+    default_realm = EXAMPLE.COM
+    dns_lookup_kdc = false
+    dns_lookup_realm = false
+    ticket_lifetime = 24h
+    renew_lifetime = 7d
+    forwardable = true
+
+[realms]
+    EXAMPLE.COM = {
+        kdc = localhost:88
+        admin_server = localhost:464
+    }
+
+[domain_realm]
+    .example.com = EXAMPLE.COM
+    example.com = EXAMPLE.COM
+    172.24.0.1 = EXAMPLE.COM
+
+
+
+10.2 kinit user@EXAMPLE.COM
+
+11. spustit client.py nebo curl --negotiate -u : -v http://localhost:5000/protected
+
+
+
